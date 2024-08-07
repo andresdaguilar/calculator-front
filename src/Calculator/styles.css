@@ -1,0 +1,29 @@
+.calc-grid {
+  background-color: grey;
+  color: white;
+}
+
+.calc-item {
+  border: 1px solid white;
+  text-align: center;
+  min-height: 50px;
+  line-height: 50px;
+}
+
+.calc-item button {
+  color: white;
+  padding: 0px;
+  font-weight: 800;
+  height: 100%;
+  width: 100%;
+  min-width: none;
+  font-size: 20px;
+}
+
+.dark {
+  background-color: rgb(72, 72, 72);
+}
+
+.operation {
+  background-color: rgb(220, 144, 38);
+}

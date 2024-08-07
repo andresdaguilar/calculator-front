@@ -25,3 +25,7 @@
 .calculator {
   font-family: 'Calculator', sans-serif;
 }
+
+body{
+  background-color: #282c34;
+}
