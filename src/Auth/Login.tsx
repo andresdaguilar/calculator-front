@@ -6,15 +6,15 @@ import apiRequest from '../helpers/apiRequest';
 
 const Login = () => {
   const { user, setUser } = useContext(AppContext);
-  const [ email, setEmail ] = useState('andresd.aguilar@gmail.com');
-  const [ password, setPassword ] = useState('1234');
+  const [ email, setEmail ] = useState('');
+  const [ password, setPassword ] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = async () => {
     console.log('Email:', email);
     console.log('Password:', password);
     // Add your login logic here
-    setUser({ email, token: '1234', balance: 0 });
+    setUser({ email, token: '', balance: 0 });
     try{
       const login = await apiRequest({token: '', url: '/user/login', method: 'POST', data: { email, password }, params: {}}); 
       console.log("Login", login);
@@ -78,7 +78,7 @@ const Login = () => {
         >
           Login
         </Button>
-        <p>Don't have an account? <a href="/register">Register</a></p>
+        {/* <p>Don't have an account? <a href="/register">Register</a></p> */}
       </Box>
     </Container>
   );
