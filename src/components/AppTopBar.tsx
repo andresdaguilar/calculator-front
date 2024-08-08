@@ -13,19 +13,26 @@ import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import AdbIcon from '@mui/icons-material/Adb';
 import { useNavigate } from 'react-router-dom';
+import { useContext } from 'react';
+import { AppContext } from '../context/AppContext';
 const pages = ['Records', 'Sign out'];
 
 function ResponsiveAppBar() {
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
   const navigate = useNavigate();
-
+  const { user, setUser } = useContext(AppContext);
   const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElNav(event.currentTarget);
   };  
 
   const handleCloseNavMenu = () => {
     setAnchorElNav(null);
+  }
+
+  const handleSignOut = () => {
+    setUser({ email: '', token: '', balance: 0});
+    navigate('/login');
   }
 
   const handleClick = (target: string) => {
@@ -89,7 +96,7 @@ function ResponsiveAppBar() {
               <MenuItem  onClick={() => handleClick("/records")}>
                 <Typography textAlign="center">Records</Typography>
               </MenuItem>
-              <MenuItem  onClick={handleCloseNavMenu}>
+              <MenuItem  onClick={() => handleSignOut()}>
                 <Typography textAlign="center">Sign out</Typography>
               </MenuItem>              
             </Menu>
@@ -118,7 +125,7 @@ function ResponsiveAppBar() {
           <Button onClick={() => handleClick("/records")} sx={{ my: 2, color: 'white', display: 'block' }}>
               Records
           </Button>
-          <Button onClick={() => handleClick("/")} sx={{ my: 2, color: 'white', display: 'block' }}>
+          <Button onClick={() => handleSignOut()} sx={{ my: 2, color: 'white', display: 'block' }}>
               Sign Out
           </Button>
           </Box>          

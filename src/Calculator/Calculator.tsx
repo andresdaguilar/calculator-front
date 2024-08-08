@@ -16,7 +16,6 @@ const Calculator = () => {
   const [ operationTypes, setOperationTypes ]= useState<iOperationTypes[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ input, setInput] = useState('');
-  const [ result, setResult] = useState<string | null>(null);
   const [ isValid, setIsValid ] = useState(true);
   const [ errorMessage, setErrorMessage ] = useState('');
   const [ operationCost, setOperationCost ] = useState(0);
