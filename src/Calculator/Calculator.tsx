@@ -9,6 +9,8 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import OperationTypes from '../helpers/operationTypes.enum';
 import iOperationTypes from './iOperationTypes';
+import CalcButton from './CalcButton';
+import AddCreditDialog from './AddCreditDialog';
 
 const Calculator = () => {
   const [ operationTypes, setOperationTypes ]= useState<iOperationTypes[]>([]);
@@ -18,6 +20,7 @@ const Calculator = () => {
   const [ isValid, setIsValid ] = useState(true);
   const [ errorMessage, setErrorMessage ] = useState('');
   const [ operationCost, setOperationCost ] = useState(0);
+  const [ dialogOpen, setDialogOpen ] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
@@ -30,6 +33,7 @@ const Calculator = () => {
   }
 
   const handleRandomString= async () => {
+    setInput('Loading...');
     const operationDetail = operationTypes.find((operation: any) => operation.type === OperationTypes.RANDOM_STRING);
     if (operationDetail?.id)
     try {
@@ -39,11 +43,18 @@ const Calculator = () => {
     } catch (error){
       console.log(error)  
     }
-    console.log('RANDOM STRING')
   }
 
-  const handleAddCredit = () => {
-    navigate('/add-credit');
+  const handleAddCredit = async  () => {
+    setDialogOpen(false)
+    try {
+      const result = await apiRequest({token: user.token, url: '/user/update-balance', method: 'PATCH', data: {new_balance: 100}, params: {}});
+      console.log(result)
+      setUser({ ...user, balance: result.new_balance});
+
+    } catch (error) {
+      console.log(error)
+    }
   }
   
   const handleInput= async  (type: string, value: string | undefined) => {
@@ -106,9 +117,7 @@ const Calculator = () => {
   
 
   const getOperationDetails = (operationType: string) : iOperationTypes  => {
-    console.log(operationType);
     const operationName = getOperationType(operationType);
-    console.log(operationType, operationName);
     const operation = operationTypes.find((operation: any) => operation.type === operationName);
     if (operation) {
       return operation;
@@ -151,26 +160,7 @@ const Calculator = () => {
       }            
     }
   }
-  interface iButton {
-    label: string;
-    type: string,
-    value?: string,
-    className: string;
-    tooltip: string;
-    width?: number;
-  }
-  
-  const CalcButton = (button: iButton) => {
-    return (
-      <Tooltip title={button.tooltip} placement="top">
-        <Grid item xs={button.width || 3} className={`calc-item ${button.className}`} >
-          <Button onClick={() => handleInput(button.type, button.value)}>
-            {button.label}
-          </Button>
-        </Grid>
-      </Tooltip>
-    )
-  }
+
 
   useEffect(() => {
     //Get Operations
@@ -189,11 +179,7 @@ const Calculator = () => {
             } else {
               console.log(`Error: ${error.response.status}`);
             }
-          } else {
-            console.log('Error: No response from server');
-          }
-        } else {
-          console.log('Error: Something went wrong');
+          } 
         }
         setIsLoading(false);
       }
@@ -242,7 +228,7 @@ const Calculator = () => {
             />
           </Grid>
           {buttons.map((button, index) => (
-            <CalcButton key={index} {...button} />
+            <CalcButton key={index} button={button} handleInput={handleInput} />
           ))}
         </Grid>
         
@@ -256,7 +242,8 @@ const Calculator = () => {
           <Grid item xs={6}>Your Balance: <p>{user.balance}</p></Grid>
           <Grid item xs={6}>Cost: <p>{operationCost}</p></Grid>
           <Grid item xs={12}>
-            <Button onClick={() => handleAddCredit}>Add credit</Button>
+          <Button variant="outlined" onClick={() => setDialogOpen(true)}>Add Credit </Button>
+          <AddCreditDialog open={dialogOpen} setOpen={setDialogOpen} handleConfirm={handleAddCredit} />
           </Grid>
         </Grid>        
         
