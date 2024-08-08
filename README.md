@@ -1,4 +1,22 @@
-# Getting Started with Create React App
+# Arithmetic Calculator REST API
+
+## Project Description
+
+The Arithmetic Calculator REST API is a web platform designed to provide simple calculator functionalities, including addition, subtraction, multiplication, division, square root calculation, and random string generation. Each functionality incurs a specific cost per request, which is deducted from the user's starting credit/balance. If a user's balance is insufficient to cover the request cost, the request will be denied.
+
+This project consists of a RESTful API built using Express.js and a front-end UI application. Both applications are hosted live on a platform of choice and can be configured and used locally by other developers. Detailed instructions are provided to facilitate this setup.
+
+## Key Features
+
+- **Calculator Operations**: Addition, subtraction, multiplication, division, square root calculation, and random string generation.
+- **User Balance Reset**: The Balance can be reset up to 100 as many times as you want.
+- **Record list**: The record list allows you to view, filter, order and delete existing records.
+
+LIVE Demo: https://calculator-front-olive.vercel.app/
+
+
+
+# Getting Started with Create React App to run it locally:
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
