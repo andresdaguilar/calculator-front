@@ -2,7 +2,8 @@ import { createContext, Dispatch, ReactNode, SetStateAction, useEffect, useState
 
 export type User = {
   email: string,
-  token: string
+  token: string,
+  balance: number
 }
 
 export interface AppContextInterface {
@@ -13,7 +14,8 @@ export interface AppContextInterface {
 const defaultState = {
   user: {
     email: '',
-    token: ''
+    token: '',
+    balance: 0
   },
   setUser: () => {}
 } as AppContextInterface

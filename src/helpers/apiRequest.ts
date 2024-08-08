@@ -1,7 +1,5 @@
 import axios, { Method } from 'axios';
 
-import OperationTypes from '../helpers/operationTypes.enum';
-
 const baseUrl = process.env.REACT_APP_API_URL;
 
 interface ApiRequestParams {
@@ -39,47 +37,5 @@ const apiRequest = async ({token, url, method = 'GET', data = {}, params = {}} :
     throw error;
   }
 };
-
-export const getOperationType = (operator: string) => {    
-  switch(operator) {
-    case '+':
-      return OperationTypes.ADDITION;
-    case '-':
-      return OperationTypes.SUBTRACTION;
-    case '*':
-      return OperationTypes.MULTIPLICATION;
-    case '/':
-      return OperationTypes.DIVISION;
-    case "sr":
-      return OperationTypes.SQUARE_ROOT;
-    case "random":
-      return OperationTypes.RANDOM_STRING;
-  }
-}
-
-interface OperationComponents {
-  amount1: number;
-  amount2: number;
-  operation: string;
-}
-export const getValuesAndOperation = (input: string) : OperationComponents => {
-  const regex = /^(\d+)([+\-*/])(\d+)$/;
-  const match = input.match(regex);
-
-  if (match) {
-    const [, amount1, operation, amount2] = match;
-    return {
-      amount1: parseFloat(amount1),
-      amount2: parseFloat(amount2),
-      operation: operation,
-    }
-  } else {
-      return {
-        amount1: 0,
-        amount2: 0,
-        operation: ''
-      }
-  }    
-}
 
 export default apiRequest;

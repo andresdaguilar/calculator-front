@@ -2,20 +2,27 @@ import React, { useState, useContext } from "react";
 import { AppContext } from "../context/AppContext";
 import { Box, Button, Container, TextField, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-
+import apiRequest from '../helpers/apiRequest';
 
 const Login = () => {
   const { user, setUser } = useContext(AppContext);
-  const [ email, setEmail ] = useState('');
-  const [ password, setPassword ] = useState('');
+  const [ email, setEmail ] = useState('andresd.aguilar@gmail.com');
+  const [ password, setPassword ] = useState('1234');
   const navigate = useNavigate();
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     console.log('Email:', email);
     console.log('Password:', password);
     // Add your login logic here
-    setUser({ email, token: '1234' });
-    
+    setUser({ email, token: '1234', balance: 0 });
+    try{
+      const login = await apiRequest({token: '', url: '/user/login', method: 'POST', data: { email, password }, params: {}}); 
+      console.log("Login", login);
+      setUser({ email: login.email, token: login.token, balance: login.balance });
+      navigate('/');
+    }catch (error) {
+    console.log(error)
+    }    
     navigate('/');
   };
 

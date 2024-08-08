@@ -1,17 +1,15 @@
 import React, { useEffect, useState, useRef, useContext } from 'react';
-import { Box, Container, TextField, Typography, Button, Card, Grid, Tooltip, Alert, CircularProgress } from '@mui/material';
-import OperationTypes from '../helpers/operationTypes.enum';
+import { Box, Container, TextField, Typography, Button, Card, Grid, Tooltip, Alert, CircularProgress, Paper } from '@mui/material';
 import buttons from './buttons';
-import apiRequest from './helpers';
+import apiRequest, { getOperationType, getValuesAndOperation } from './helpers';
 
 import "./styles.css";
 import { AppContext } from '../context/AppContext';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import OperationTypes from '../helpers/operationTypes.enum';
+import iOperationTypes from './iOperationTypes';
 
-interface iOperationTypes {
-  id: number, 
-  type: string,
-  cost: number  
-}
 const Calculator = () => {
   const [ operationTypes, setOperationTypes ]= useState<iOperationTypes[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
@@ -19,48 +17,36 @@ const Calculator = () => {
   const [ result, setResult] = useState<string | null>(null);
   const [ isValid, setIsValid ] = useState(true);
   const [ errorMessage, setErrorMessage ] = useState('');
+  const [ operationCost, setOperationCost ] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
-  const { user } = useContext(AppContext);
+  const { user, setUser } = useContext(AppContext);
 
   const handleClear= () => {
-    console.log("clear")
     setInput('');
     setIsValid(true);
     setErrorMessage('');
   }
 
-  const handleRandomString= () => {
+  const handleRandomString= async () => {
+    const operationDetail = operationTypes.find((operation: any) => operation.type === OperationTypes.RANDOM_STRING);
+    if (operationDetail?.id)
+    try {
+      const result = await apiRequest({token: user.token, url: '/record', method: 'POST', data: {amount: 0, amount2: 0, operation_id: operationDetail.id}, params: {}});
+      setInput(result.operation_response);
+      setUser({ ...user, balance: result.user_balance});
+    } catch (error){
+      console.log(error)  
+    }
     console.log('RANDOM STRING')
   }
 
-  const getOperationType = (operator: string) => {    
-    switch(operator) {
-      case '+':
-        return OperationTypes.ADDITION;
-      case '-':
-        return OperationTypes.SUBTRACTION;
-      case 'x':
-        return OperationTypes.MULTIPLICATION;
-      case '/':
-        return OperationTypes.DIVISION;
-      case "sr":
-        return OperationTypes.SQUARE_ROOT;
-      case "random":
-        return OperationTypes.RANDOM_STRING;
-    }
+  const handleAddCredit = () => {
+    navigate('/add-credit');
   }
-
-  const getOperationDetails = (operationType: string) : iOperationTypes | null => {
-    const operation = operationTypes.find((operation: any) => operation.type === getOperationType(operationType));
-    if (operation) {
-      return operation;
-    }
-    return null
-  }
-
-  const handleInput= (type: string, value: string | undefined) => {
-    console.log('input', type, value)
+  
+  const handleInput= async  (type: string, value: string | undefined) => {
     setIsValid(true);
     const regex = /[+\-*/]/;
     if(regex.test(input) && type === 'operator') {
@@ -81,7 +67,7 @@ const Calculator = () => {
         break;
       case 'operator':
         if (value === 'sr') {
-          calculate('sr');
+          await calculate('sr');
           break;
         }else{
           setInput(input + value);          
@@ -94,14 +80,13 @@ const Calculator = () => {
         //Validate that only 1 operation is present
         const regex = /[+\-x/]/g;
         const matches = value?.match(regex);
-        console.log(value,"matches",matches?.length)
         if (matches && matches.length > 1) {
           setIsValid(false);
           setErrorMessage('Only 1 operation at a time');
           
         }else {
           //Check invalid chars
-          const ValidCharsRegex = /^[123456789+\-./*]*$/;
+          const ValidCharsRegex = /^[0123456789+\-./*]*$/;
           if (!ValidCharsRegex.test(value || '')){
             setIsValid(false);
             setErrorMessage('Invalid character');            
@@ -111,29 +96,61 @@ const Calculator = () => {
         }      
         break; 
       case 'calculate':
-        calculate();
+        await calculate();
         break;
     }
     if (inputRef.current) {
       inputRef.current.focus();
     }
   }
+  
 
-  const extractSymbol = (str: string) => {
-    const regex = /[+\-*/]/;
-    const match = str.match(regex);
-    return match ? match[0] : '';
-  };
-
-  const calculate = (operationType? : string) => {
-    //Get Operation Type    
-    const operationDetails = getOperationDetails(operationType || extractSymbol(input))
-    console.log('Calculate', input, operationDetails?.cost)
-    //Get values
-    //Validate balance
-    //Execute operation
-    //Display Result
+  const getOperationDetails = (operationType: string) : iOperationTypes  => {
+    console.log(operationType);
+    const operationName = getOperationType(operationType);
+    console.log(operationType, operationName);
+    const operation = operationTypes.find((operation: any) => operation.type === operationName);
+    if (operation) {
+      return operation;
     }
+    return {id: 0, type: '', cost: '0'}
+  }
+
+  const calculate = async (operationType? : string) => {
+    //Calculate result if user has enough balance
+    //Get Operation Type and Operation Id based on the symbol used for the operation
+    //Get amounts from the input depending on the operation type  
+    let amountValue, amount2Value, costValue= 0;
+    let operationDetails;
+    if (operationType === 'sr') {
+      amountValue = parseFloat(input);
+      amount2Value = 0;
+      operationDetails = getOperationDetails(operationType);
+      costValue = parseFloat(operationDetails.cost);         
+    } else{
+      const { amount1, amount2, operation } = getValuesAndOperation(input);
+      operationDetails = getOperationDetails(operation);
+      amountValue = amount1;
+      amount2Value = amount2;
+      costValue = parseFloat(operationDetails.cost);
+    }
+  
+    setOperationCost(costValue);
+    if (costValue > user.balance) {
+      setIsValid(false);
+      setErrorMessage('Insufficient balance');
+      return;
+    }else {
+      //Execute operation
+      try {
+        const result = await apiRequest({token: user.token, url: '/record', method: 'POST', data: {amount: amountValue, amount2: amount2Value, operation_id: operationDetails.id }, params: {} });
+        setInput(result.operation_response)  ;
+        setUser({ ...user, balance: result.user_balance});
+      } catch (error) {
+        console.log(error);
+      }            
+    }
+  }
   interface iButton {
     label: string;
     type: string,
@@ -154,15 +171,31 @@ const Calculator = () => {
       </Tooltip>
     )
   }
+
   useEffect(() => {
     //Get Operations
     const fetchOperations = async () => {
       try {
-        const operations =  await apiRequest({token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTcyMzA1NjIwMywiZXhwIjoxNzIzMDU5ODAzfQ.GySmCYRZled-_6Y-aUAjAkugvqRFrNpBGQnCweYOoaY", url: '/operation', method: 'GET', data: {}, params: {} });
+        const operations =  await apiRequest({token: user.token, url: '/operation', method: 'GET', data: {}, params: {} });
         setOperationTypes(operations)
         setIsLoading(false);
       } catch(error) {
-        console.log(error);
+          navigate('/login');
+        if (axios.isAxiosError(error)) {
+          if (error.response) {
+            if (error.response.status === 401) {
+              console.error('Unauthorized: 401');
+              navigate('/login');
+            } else {
+              console.log(`Error: ${error.response.status}`);
+            }
+          } else {
+            console.log('Error: No response from server');
+          }
+        } else {
+          console.log('Error: Something went wrong');
+        }
+        setIsLoading(false);
       }
       
     }
@@ -218,15 +251,28 @@ const Calculator = () => {
           <Box sx={{ margin: "10px"}}>
             <Alert severity="warning">{errorMessage}</Alert>
           </Box>
-          }
-        Cost:
-        Balance:
-        {result !== null && (
-          <Typography variant="h6" component="div" sx={{ mt: 2 }}>
-            Result: {result}
-          </Typography>
-        )}
+        }
+        <Grid container sx={{margin:"10px"}}>
+          <Grid item xs={6}>Your Balance: <p>{user.balance}</p></Grid>
+          <Grid item xs={6}>Cost: <p>{operationCost}</p></Grid>
+          <Grid item xs={12}>
+            <Button onClick={() => handleAddCredit}>Add credit</Button>
+          </Grid>
+        </Grid>        
+        
       </Card>
+      <Box >
+      <Paper sx={{margin:"30px", padding: "20px"}}>
+        <h3>Operation Costs</h3>
+        <ul>
+          {operationTypes.map((operation: iOperationTypes) => (
+            <li key={operation.id}>
+              {operation.type} - {operation.cost}
+            </li>
+          ))}
+          </ul>
+      </Paper>
+      </Box>
     </Container>
   );
 };
